@@ -1,4 +1,5 @@
 #include <iostream>
+#include "sha1.hpp"
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -97,9 +98,91 @@ int main(int argc, char *argv[])
             cout << object_content << flush;
         }
     }
+    else if (command == "hash-object")
+    {
+
+        if (argc <= 3)
+        {
+            cerr << "Invalid arguments, please provide valid arguments \n";
+            return EXIT_FAILURE;
+        }
+
+        const string flag = argv[2];
+
+        const set<string> supported_flags = {"-w"};
+
+        if (supported_flags.find(flag) == supported_flags.end())
+        {
+            cerr << "Invalid flag for cat-file, expected one of ";
+            for (const auto &f : supported_flags)
+            {
+                cerr << f << " ";
+            }
+            cerr << "\n";
+            return EXIT_FAILURE;
+        }
+
+        if (flag == "-w")
+        {
+
+            // third argument value will be the name of the file to be compressed using zlib
+            // and then this has to be added as a object file in the object directory
+
+            // steps
+            // check if the file actually exist ( if not exist then throw error )
+            // extract the content of the file
+            // generate sha1 digest of the content as blob <size?\0<actual_content>
+            // then create a sub directory in the object folder with first 2 characters of the sha1 digest
+            // the rest will be the name of the file inside the sub folder
+            // store the same data ( blob <size?\0<actual_content> ) with zlib compression inside the file
+
+            string file_path = argv[3];
+            if (!filesystem::exists(file_path))
+            {
+                cerr << "file does not exist\n";
+                return EXIT_FAILURE;
+            }
+
+            ifstream input_file(file_path);
+            if (!input_file.is_open())
+            {
+                cerr << "Failed to load file.\n";
+                return EXIT_FAILURE;
+            }
+
+            string file_content{istreambuf_iterator<char>(input_file), istreambuf_iterator<char>()};
+            input_file.close();
+
+            string final_content = "blob " + to_string(file_content.size()) + '\0' + file_content;
+
+            // generate sha1 hash
+            SHA1 checksum;
+            checksum.update(file_content);
+            string digest = checksum.final();
+
+            string sub_dir_name = digest.substr(0, 2);
+            string object_file_name = digest.substr(2);
+
+            // create a sub directory
+            filesystem::create_directory(".git/objects/" + sub_dir_name);
+
+            // compress final content with
+            zstr::ofstream output_file(".git/objects/" + sub_dir_name + "/" + object_file_name);
+            if (!output_file.is_open())
+            {
+                cerr << "Failed to create object file.\n";
+                return EXIT_FAILURE;
+            }
+
+            output_file.write(file_content.c_str(), final_content.size());
+            output_file.close();
+
+            cout << digest << endl;
+        }
+    }
     else
     {
-        cerr << "Unknown command " << command << '\n';
+        cerr << "Invalid command.\n";
         return EXIT_FAILURE;
     }
 
