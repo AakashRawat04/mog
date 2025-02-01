@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
 
         if (supported_flags.find(flag) == supported_flags.end())
         {
-            cerr << "Invalid flag for cat-file, expected one of ";
+            cerr << "Invalid flag for hash-object, expected one of ";
             for (const auto &f : supported_flags)
             {
                 cerr << f << " ";
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 
             // generate sha1 hash
             SHA1 checksum;
-            checksum.update(file_content);
+            checksum.update(final_content);
             string digest = checksum.final();
 
             string sub_dir_name = digest.substr(0, 2);
@@ -166,15 +166,17 @@ int main(int argc, char *argv[])
             // create a sub directory
             filesystem::create_directory(".git/objects/" + sub_dir_name);
 
-            // compress final content with
-            zstr::ofstream output_file(".git/objects/" + sub_dir_name + "/" + object_file_name);
+            string full_path = ".git/objects/" + sub_dir_name + "/" + object_file_name;
+
+            // Compress final content
+            zstr::ofstream output_file(full_path);
             if (!output_file.is_open())
             {
-                cerr << "Failed to create object file.\n";
+                cerr << "Failed to create object file: " << full_path << "\n";
                 return EXIT_FAILURE;
             }
 
-            output_file.write(file_content.c_str(), final_content.size());
+            output_file.write(final_content.c_str(), final_content.size());
             output_file.close();
 
             cout << digest << endl;
