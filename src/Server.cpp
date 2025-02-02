@@ -5,8 +5,37 @@
 #include <string>
 #include <set>
 #include "zstr.hpp"
+#include <zlib.h>
 
 using namespace std;
+
+bool compressData(const std::string &input, std::string &output)
+{
+    z_stream zs{};
+    if (deflateInit(&zs, Z_BEST_COMPRESSION) != Z_OK)
+        return false;
+
+    zs.next_in = (Bytef *)input.data();
+    zs.avail_in = input.size();
+
+    char outbuffer[32768];
+    do
+    {
+        zs.next_out = reinterpret_cast<Bytef *>(outbuffer);
+        zs.avail_out = sizeof(outbuffer);
+
+        if (deflate(&zs, Z_FINISH) == Z_STREAM_ERROR)
+        {
+            deflateEnd(&zs);
+            return false;
+        }
+
+        output.append(outbuffer, sizeof(outbuffer) - zs.avail_out);
+    } while (zs.avail_out == 0);
+
+    deflateEnd(&zs);
+    return true;
+}
 
 int main(int argc, char *argv[])
 {
@@ -169,15 +198,25 @@ int main(int argc, char *argv[])
             string full_path = ".git/objects/" + sub_dir_name + "/" + object_file_name;
 
             // Compress final content
-            zstr::ofstream output_file(full_path);
-            if (!output_file.is_open())
+            // zstr::ofstream output_file(full_path, ios::binary);
+            // if (!output_file.is_open())
+            // {
+            //     cerr << "Failed to create object file: " << full_path << "\n";
+            //     return EXIT_FAILURE;
+            // }
+
+            // output_file.write(final_content.c_str(), final_content.size());
+            // output_file.close();
+
+            std::string compressed_data;
+            if (!compressData(final_content, compressed_data))
             {
-                cerr << "Failed to create object file: " << full_path << "\n";
+                cerr << "Compression failed!\n";
                 return EXIT_FAILURE;
             }
 
-            output_file.write(final_content.c_str(), final_content.size());
-            output_file.close();
+            ofstream output_file(full_path, ios::binary);
+            output_file.write(compressed_data.data(), compressed_data.size());
 
             cout << digest << endl;
         }
