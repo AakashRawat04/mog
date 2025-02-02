@@ -24,7 +24,9 @@ bool compressData(const std::string &input, std::string &output)
         zs.next_out = reinterpret_cast<Bytef *>(outbuffer);
         zs.avail_out = sizeof(outbuffer);
 
-        if (deflate(&zs, Z_FINISH) == Z_STREAM_ERROR)
+        int deflateRes = deflate(&zs, Z_FINISH);
+
+        if (deflateRes == Z_STREAM_ERROR)
         {
             deflateEnd(&zs);
             return false;
@@ -198,16 +200,6 @@ int main(int argc, char *argv[])
             string full_path = ".git/objects/" + sub_dir_name + "/" + object_file_name;
 
             // Compress final content
-            // zstr::ofstream output_file(full_path, ios::binary);
-            // if (!output_file.is_open())
-            // {
-            //     cerr << "Failed to create object file: " << full_path << "\n";
-            //     return EXIT_FAILURE;
-            // }
-
-            // output_file.write(final_content.c_str(), final_content.size());
-            // output_file.close();
-
             std::string compressed_data;
             if (!compressData(final_content, compressed_data))
             {
