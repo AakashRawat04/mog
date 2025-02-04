@@ -1,10 +1,10 @@
 #include <iostream>
-#include "sha1.hpp"
+#include "externals/sha1.hpp"
 #include <filesystem>
 #include <fstream>
 #include <string>
 #include <set>
-#include "zstr.hpp"
+#include "externals/zstr.hpp"
 #include <zlib.h>
 
 using namespace std;
