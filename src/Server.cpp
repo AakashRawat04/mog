@@ -3,6 +3,7 @@
 #include "commands/cat_file.hpp"
 #include "commands/hash_object.hpp"
 #include "commands/init.hpp"
+#include "commands/ls_tree.hpp"
 
 using namespace std;
 
@@ -30,6 +31,10 @@ int main(int argc, char *argv[])
     else if (command == "hash-object")
     {
         return handle_hash_object(argc, argv);
+    }
+    else if (command == "ls-tree")
+    {
+        return handle_ls_tree(argc, argv);
     }
     else
     {
