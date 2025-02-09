@@ -62,7 +62,5 @@ string create_commit_content(const string &tree_sha, const string &parent_sha, c
   commit << "\n"
          << commit_message << "\n";
 
-  cout << "commit message created: " << commit.str() << endl;
-
   return commit.str();
 }
