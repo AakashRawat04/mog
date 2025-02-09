@@ -34,3 +34,35 @@ vector<unsigned char> hex_to_raw(const string &hex)
   }
   return raw;
 }
+
+string get_current_timestamp()
+{
+  time_t now = time(nullptr);
+  struct tm *gmt = gmtime(&now);
+
+  char buffer[32];
+  strftime(buffer, sizeof(buffer), "%s %z", gmt);
+  return string(buffer);
+}
+
+string create_commit_content(const string &tree_sha, const string &parent_sha, const string &commit_message)
+{
+  string author = "Aakash Rawat <2004rawataakash@gmail.com>";
+  string time_stamp = get_current_timestamp();
+
+  stringstream commit;
+  commit << "tree " << tree_sha << "\n";
+  if (!parent_sha.empty())
+  {
+    commit << "parent " << parent_sha << "\n";
+  }
+
+  commit << "author " << author << " " << time_stamp << "\n";
+  commit << "committer " << author << " " << time_stamp << "\n";
+  commit << "\n"
+         << commit_message << "\n";
+
+  cout << "commit message created: " << commit.str() << endl;
+
+  return commit.str();
+}

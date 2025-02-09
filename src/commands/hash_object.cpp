@@ -5,6 +5,7 @@
 #include "../externals/sha1.hpp"
 #include "../utils/compress.hpp"
 #include "hash_object.hpp"
+#include "../utils/write_blob.hpp"
 
 using namespace std;
 
@@ -37,37 +38,7 @@ int handle_hash_object(int argc, char *argv[])
       return EXIT_FAILURE;
     }
 
-    ifstream input_file(file_path);
-    if (!input_file.is_open())
-    {
-      cerr << "Failed to load file.\n";
-      return EXIT_FAILURE;
-    }
-
-    string file_content{istreambuf_iterator<char>(input_file), istreambuf_iterator<char>()};
-    input_file.close();
-
-    string final_content = "blob " + to_string(file_content.size()) + '\0' + file_content;
-
-    SHA1 checksum;
-    checksum.update(final_content);
-    string digest = checksum.final();
-
-    string sub_dir_name = digest.substr(0, 2);
-    string object_file_name = digest.substr(2);
-
-    filesystem::create_directory(".git/objects/" + sub_dir_name);
-    string full_path = ".git/objects/" + sub_dir_name + "/" + object_file_name;
-
-    string compressed_data;
-    if (!compressData(final_content, compressed_data))
-    {
-      cerr << "Compression failed!\n";
-      return EXIT_FAILURE;
-    }
-
-    ofstream output_file(full_path, ios::binary);
-    output_file.write(compressed_data.data(), compressed_data.size());
+    string digest = write_blob(file_path);
 
     cout << digest << endl;
   }

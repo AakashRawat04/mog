@@ -15,7 +15,7 @@ using namespace std;
 
 string write_tree(const filesystem::path &directory)
 {
-  // Use map to automatically sort entries by name
+  // using map to automatically sort entries by name
   map<string, pair<string, string>> tree_entries_map;
 
   for (const auto &entry : filesystem::directory_iterator(directory))
@@ -44,7 +44,7 @@ string write_tree(const filesystem::path &directory)
     }
     else if (filesystem::is_directory(entry))
     {
-      mode = "40000"; // Note: removed leading 0
+      mode = "40000";
       object_hash = write_tree(entry.path());
     }
     else

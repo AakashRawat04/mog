@@ -5,6 +5,7 @@
 #include "commands/init.hpp"
 #include "commands/ls_tree.hpp"
 #include "commands/write_tree.hpp"
+#include "commands/commit_tree.hpp"
 
 using namespace std;
 
@@ -40,6 +41,10 @@ int main(int argc, char *argv[])
     else if (command == "write-tree")
     {
         return handle_write_tree(argc, argv);
+    }
+    else if (command == "commit-tree")
+    {
+        return handle_commit_tree(argc, argv);
     }
     else
     {
