@@ -21,7 +21,7 @@ string write_blob(const string &file_path)
   string file_content{istreambuf_iterator<char>(input_file), istreambuf_iterator<char>()};
   input_file.close();
 
-  string final_content = "blob" + to_string(file_content.size()) + '\0' + file_content;
+  string final_content = "blob " + to_string(file_content.size()) + '\0' + file_content;
 
   SHA1 checksum;
   checksum.update(final_content);
