@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <map>
 #include <filesystem>
 #include "../externals/sha1.hpp"
 #include "../utils/compress.hpp"
@@ -12,48 +13,59 @@
 
 using namespace std;
 
-string write_tree(const filesystem::path &direcory)
+string write_tree(const filesystem::path &directory)
 {
-  string tree_entries;
+  // Use map to automatically sort entries by name
+  map<string, pair<string, string>> tree_entries_map;
 
-  for (const auto &entry : filesystem::directory_iterator(direcory))
+  for (const auto &entry : filesystem::directory_iterator(directory))
   {
-
-    // ignore .git folder
-    string relative_path = filesystem::relative(entry.path(), direcory).string();
-    if (relative_path.find("./git/") == 0 || relative_path == ".git")
+    string relative_path = filesystem::relative(entry.path(), directory).string();
+    if (relative_path.find(".git") == 0)
     {
       continue;
     }
 
-    string name = entry.path().filename();
+    string name = entry.path().filename().string();
     string mode;
-    string objec_hash;
+    string object_hash;
 
     if (filesystem::is_regular_file(entry))
     {
-      mode = "100644";
-      objec_hash = write_blob(entry.path());
+      if ((filesystem::status(entry).permissions() & filesystem::perms::owner_exec) != filesystem::perms::none)
+      {
+        mode = "100755";
+      }
+      else
+      {
+        mode = "100644";
+      }
+      object_hash = write_blob(entry.path());
     }
-    else if (filesystem::is_directory(entry.path()))
+    else if (filesystem::is_directory(entry))
     {
-      mode = "040000";
-      objec_hash = write_tree(entry.path());
-    }
-    else if ((filesystem::status(entry).permissions() & filesystem::perms::owner_exec) != filesystem::perms::none)
-    {
-      mode = "100755";
-      objec_hash = write_blob(entry.path());
+      mode = "40000"; // Note: removed leading 0
+      object_hash = write_tree(entry.path());
     }
     else
     {
       continue;
     }
 
-    // in tree objects we store the hash in binary format and not as hexadecimal format.
-    // construct tree entry: "<mode> <filename>\0<raw_hash>"
-    string entry_data = mode + " " + name + '\0' + string(reinterpret_cast<const char *>(hex_to_raw(objec_hash).data()), 20);
-    tree_entries += entry_data;
+    if (!object_hash.empty())
+    {
+      tree_entries_map[name] = make_pair(mode, object_hash);
+    }
+  }
+
+  string tree_entries;
+  for (const auto &entry : tree_entries_map)
+  {
+    string name = entry.first;
+    string mode = entry.second.first;
+    string hash = entry.second.second;
+
+    tree_entries += mode + " " + name + '\0' + string(reinterpret_cast<const char *>(hex_to_raw(hash).data()), 20);
   }
 
   if (tree_entries.empty())
